@@ -1,0 +1,45 @@
+#oc - customizado/outros
+oh: ao atacar
+ep: efeito permanente
+id: imunidade a dano de
+ie: imunidade ao efeito
+3h: a cada terceiro hit
+ae: aura de efeito
+ok: ao matar
+od: ao morrer
+uc: uma vez ao não tomar dano por 10 segundos
+fc: constantemente ao não tomar dano por 10 segundos
+dd: durante o dia
+dn: durante a noite
+ni: no nether
+ne: no ender
+no:  no overworld
+na: na água
+nl: na lava
+nn: nulo
+vultoNome: Vulto Encarnado
+vultoDesc: Passe 20 dias consecutivos no escuro
+francoNome: Franco Atirador
+francoDesc: Mate todos os mobs agressivos usando projéteis
+guerraNome: Guerreiro
+guerraDesc: Mate todos os mobs agressivos usando melee
+alquimistaNome: Alquimista
+alquimistaDesc: Mate todos os mobs agressivos usando poções
+bombaNome: Bombardeador
+bombaDesc: Mate todos os mobs agressivos usando explosões
+matilhaNome: Líder da Matilha
+matilhaDesc: Mate todos os mobs agressivos usando lobos
+netherNome: Abençoado pelo Nether
+netherDesc: Atravesse 7km dentro do Nether de uma só vez
+oceanoNome: Talassofílico
+oceanoDesc: Nade 7km
+shamaNome: Shamã
+shamaDesc: Domestique todos os animais domesticaveis
+cowboyNome: Cowboy
+cowboyDesc: Ande 10km em uma montaria de uma só vez
+cabraNome: Cabra Macho
+cabraDesc: Encare seu destino por queda 100x
+voidNome: Andarilho do Vazio
+voidDesc: Encare o seu destino no vazio 100x
+vultoTicks: 480000;
+
