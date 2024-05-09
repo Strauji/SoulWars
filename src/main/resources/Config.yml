@@ -1,2 +1,21 @@
 lang: pt_br
-shadowGiven: false
+banOnSouless: false
+
+given0: 0
+given1: 0
+given2: 0
+given3: 0
+given4: 0
+given5: 0
+given6: 0
+given7: 0
+given8: 0
+given9: 0
+given10: 0
+given11: 0
+givenArt0: 0
+givenArt1: 0
+givenArt2: 0
+givenArt3: 0
+givenArt4: 0
+

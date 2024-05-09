@@ -3,3 +3,7 @@ version: 1.0
 main: org.soulwar.SoulWars
 api-version: '1.20'
 author: Strauji
+commands:
+  sw:
+    description: Comando base
+    usage: ''

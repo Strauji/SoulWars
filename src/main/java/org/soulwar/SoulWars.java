@@ -2,28 +2,32 @@ package org.soulwar;
 import com.fren_gor.ultimateAdvancementAPI.AdvancementMain;
 import com.fren_gor.ultimateAdvancementAPI.AdvancementTab;
 import com.fren_gor.ultimateAdvancementAPI.UltimateAdvancementAPI;
+import com.fren_gor.ultimateAdvancementAPI.advancement.Advancement;
+import com.fren_gor.ultimateAdvancementAPI.advancement.BaseAdvancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.RootAdvancement;
-import com.fren_gor.ultimateAdvancementAPI.advancement.display.AdvancementDisplay;
-import com.fren_gor.ultimateAdvancementAPI.advancement.display.AdvancementFrameType;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
 
 public class SoulWars extends JavaPlugin implements Listener {
+    public ItemManager itemManager;
     private File playerSoulsFile;
     private File playerProgressionFile;
     private String langFile = "pt_br.yml";
     private File localizationFile;
     private FileConfiguration localization;
-    private FileConfiguration playerSouls;
+    public FileConfiguration playerSouls;
     private FileConfiguration playerProgression;
     public UltimateAdvancementAPI api ;
 
@@ -31,16 +35,46 @@ public class SoulWars extends JavaPlugin implements Listener {
     public RootAdvancement root;
     private AdvancementMain main;
     public ChallengerManager challengerManager = new ChallengerManager();
+    public  final int speedUUIDMOD = 3;
+    public  final int strengthUUIDMOD = 4;
+    public  final int resistanceUUIDMOD = 5;
+    public  final int toughUUIDMOD = 6;
+    public  final int attackSpeedUUIDMOD = 7;
+    public  final int absorptionUUIDMOD = 2;
+    public  List<String> badPotionEffects = new ArrayList<>();
+    public static enum advancements{
+
+     
+        Cowboy(0),
+        Nether(1),
+        Void(2),
+        Alquimista(3),
+        Franco(4),
+        Cabra(5),
+        Shama(6),
+        Oceano(7),
+        Bomba(8),
+        Lide(9),
+        Vulto(10),
+        Guerra(11);
+        private int index;
+        advancements(int i) {
+            this.index = i;
+        }
+        public int getIndex(){
+            return this.index;
+        }
+    }
     @Override
     public void onLoad() {
         main = new AdvancementMain(this);
         main.load();
 
-        // Rest of your code
     }
 
     @Override
     public void onEnable(){
+
         main.enableSQLite(new File("advancements.db"));
         // After the initialisation of AdvancementMain you can get an instance of the UltimateAdvancementAPI class
         api = UltimateAdvancementAPI.getInstance(this);
@@ -59,6 +93,20 @@ public class SoulWars extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(this, this);
 
         Bukkit.getPluginManager().registerEvents(new Events(), this);
+        this.getCommand("sw").setExecutor(new Commands());
+        badPotionEffects.add("BAD_OMEN");
+        badPotionEffects.add("INSTANT_DAMAGE");
+        badPotionEffects.add("LONG_POISON");
+        badPotionEffects.add("LONG_SLOWNESS");
+        badPotionEffects.add("LONG_WEAKNESS");
+        badPotionEffects.add("POISON");
+        badPotionEffects.add("SLOWNESS");
+        badPotionEffects.add("STRONG_HARMING");
+        badPotionEffects.add("STRONG_POISO");
+        badPotionEffects.add("STRONG_SLOWNESS");
+        badPotionEffects.add("WEAKNESS");
+        badPotionEffects.add("LEVITATION");
+        itemManager = new ItemManager(this);
 
     }
     private void readLocalization(){
@@ -76,7 +124,7 @@ public class SoulWars extends JavaPlugin implements Listener {
         }
     }
     private void readConfig(){
-        saveResource("Config.yml", false);
+        saveDefaultConfig();
         langFile = Objects.requireNonNull(getConfig().get("lang")).toString()+".yml";
     }
     private void getPlayerProgressionFile(){
@@ -138,6 +186,61 @@ public class SoulWars extends JavaPlugin implements Listener {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    public BaseAdvancement getAdvancement(int index){
+
+        if(!challengerManager.advancementMap.containsKey(index)) return null;
+
+        return challengerManager.advancementMap.get(index);
+    }
+    public void grantAdvancement(advancements ad, Player player){
+        int adIndex = ad.getIndex();
+        if(!challengerManager.advancementMap.containsKey(adIndex)){
+            Bukkit.getLogger().log(Level.WARNING, "Advancement " + adIndex + " not found");
+            return;
+        }
+        Advancement advancement = challengerManager.advancementMap.get(adIndex);
+        String adPath = "given"+ adIndex;
+        String adOwner = Objects.requireNonNull(getConfig().get(adPath)).toString();
+        if(adOwner.equals("0")){
+            advancement.grant(player);
+            String playerPath = player.getName() + ":" + player.getUniqueId();
+            getConfig().set(adPath, playerPath);
+            //saveResource("config.yml", true);
+            saveConfig();
+        }
+        //  advancement.revoke(player);
+    }
+    public void grantAdvancement(int adIndex, Player player){
+        if(!challengerManager.advancementMap.containsKey(adIndex)){
+            Bukkit.getLogger().log(Level.WARNING, "Advancement " + adIndex + " not found");
+            return;
+        }
+        Advancement advancement = challengerManager.advancementMap.get(adIndex);
+        String adPath = "given"+ adIndex;
+        String adOwner = Objects.requireNonNull(getConfig().get(adPath)).toString();
+        String playerPath = player.getName() + ":" + player.getUniqueId();
+        if(adOwner.equals("0") || adOwner.equals("-1")){
+            advancement.grant(player);
+            getConfig().set(adPath, playerPath);
+            saveConfig();
+        }
+
+    }
+    public void revokeAvancement(int adIndex, Player player){
+        if(!challengerManager.advancementMap.containsKey(adIndex)){
+            Bukkit.getLogger().log(Level.WARNING, "Advancement " + adIndex + " not found");
+            return;
+        }
+        Advancement advancement = challengerManager.advancementMap.get(adIndex);
+        String adPath = "given"+ adIndex;
+
+        if(advancement.isGranted(player)){
+            advancement.revoke(player);
+            getConfig().set(adPath,0);
+            saveConfig();
+        }
+
     }
     public void onDisable() {
         saveSouls();

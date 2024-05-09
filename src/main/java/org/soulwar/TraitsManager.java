@@ -15,7 +15,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class TraitsManager {
-    static String[] traitID = {"oc", "oh","ep","id","ie","3h","ok","od","dd","dn","dn","na","nl",
+    //oh- ep- id- ie= 3h- ok- dd- dn- na- nl- nn-
+    static String[] traitID = { "oh","ep","id","ie","3h","ok","dd","dn","na","nl",
     "nn"};
     static String[] goodTraitID = {"ep","dd","dn","do","na","nl","ok"};
     static String[] badTraitID ={"oh", "3h", "ie", "od"};
@@ -90,19 +91,17 @@ public class TraitsManager {
                         damageAux.remove(value);
                     }
                     //Heals with damage
-                    case "od", "oc" -> {
+                    case "od" -> {
                     } //on death
                     //custom
                 }
             }
-            Bukkit.getLogger().info(trait+ " "+ traitEffect);
+
             List<String> tEffects = effects.get(trait);
             if(tEffects == null) tEffects =  new ArrayList<>();
 
             tEffects.add(traitEffect);
             effects.put(trait,tEffects);
-
-         //   ret.add("%s:%s".formatted(trait, traitEffect));
         }
 
 
@@ -121,18 +120,13 @@ public class TraitsManager {
                 if(null != traits){
                     List<String> effects = new ArrayList<>();
                     traits.forEach(s1 -> {
-
-
                         if(stringToEffect.containsKey(s1)){
-                            Bukkit.getLogger().info(s1);
-
-                            Bukkit.getLogger().info(stringToEffect.get(s1).toString());
                             effects.add(s1);
 
                         }
 
                     });
-                    player.sendMessage(s + " " +effects.toString());
+
                     player.setMetadata(s, new FixedMetadataValue(pluginInstance, effects));
                 }
 
