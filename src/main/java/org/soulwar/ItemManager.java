@@ -9,6 +9,7 @@ public class ItemManager {
     public ItemManager(SoulWars pluginInstance){
         this.pluginInstance = pluginInstance;
         registerHandler(new SoulShard(pluginInstance));
+        registerHandler(new ReviveBeacon(pluginInstance));
     }
     public void registerHandler(AbstractItem... handlers){
         for(AbstractItem handler: handlers){

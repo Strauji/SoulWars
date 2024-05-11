@@ -1,22 +1,22 @@
 #oc - customizado/outros
-oh: ao atacar
-ep: efeito permanente
-id: imunidade a dano de
-ie: imunidade ao efeito
-3h: a cada terceiro hit
+oh: Ao atacar causará
+ep: Efeito permanente
+imd: Imunidade a dano de
+ie: Imunidade ao efeito
+3h: A cada terceiro hit causará
 ae: aura de efeito
-ok: ao matar
-od: ao morrer
-uc: uma vez ao não tomar dano por 10 segundos
+ok: Ao matar
+od: Ao morrer
+uc: Uma vez ao não tomar dano por 10 segundos
 fc: constantemente ao não tomar dano por 10 segundos
-dd: durante o dia
-dn: durante a noite
-ni: no nether
-ne: no ender
-no:  no overworld
-na: na água
-nl: na lava
-nn: nulo
+dd: Durante o dia
+dn: Durante a noite
+ni: No nether
+ne: No ender
+no:  No overworld
+na: Na água
+nl: Na lava
+nn: No nether
 vultoNome: Vulto Encarnado
 vultoDesc: Passe 20 dias consecutivos no escuro
 francoNome: Franco Atirador
@@ -54,5 +54,38 @@ t8: Maníaco
 t9: Líder da Matilha
 t10: Vulto Encarnado
 t11: Guerreiro
-
-
+ABSORPTION: Absorção
+CONDUIT_POWER: Benção do Oceano
+DAMAGE_RESISTANCE: Resistência
+DOLPHINS_GRACE: Graça Marinha
+FAST_DIGGING: Pressa
+FIRE_RESISTANCE: Imunidade ao Calor
+HERO_OF_THE_VILLAGE: Herói da Vila
+INCREASE_DAMAGE: Força
+INVISIBILITY: Invisibilidade
+JUMP: Salto
+NIGHT_VISION: Visão Noturna
+REGENERATION: Fator de Cura
+SPEED: Velocidade
+WATER_BREATHING: Respiração
+SLOW_FALLING: Queda Lenta
+WEAKNESS: Fraqueza
+SLOW_DIGGING: Fádiga
+SLOW: Lentidão
+POISON: Envenenamento
+DARKNESS: Escuridão
+CONTACT: Contato
+DRAGON_BREATH: Bafo de Dragão
+DROWNING: Afogamento
+FIRE: Fogo
+FIRE_TICK: Queimadura
+LAVA: Lava
+HOT_FLOOR: Magma
+FLY_INTO_WALL: Impacto
+FREEZE: Congelamento
+MAGIC: Magia
+POISON: Envenenamento
+SONIC_BOOM: Ataque Sonoro
+STARVATION: Fome
+SUFFOCATION: Sufocament
+WITHER: Decomposição

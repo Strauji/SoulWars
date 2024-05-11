@@ -6,13 +6,16 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Bed;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
@@ -44,10 +47,19 @@ public class Events implements Listener{
         Player player = e.getPlayer();
         assert pluginInstance != null;
         initPlayer(player, pluginInstance);
-
+        try{
+            if(!Boolean.valueOf(pluginInstance.playerProgression.get(player.getName()+":"+player.getUniqueId() + ".gone").toString())){
+                player.setGameMode(GameMode.SURVIVAL);
+            };
+        }catch (Exception ignored){}
+        try{
+            int adID = Integer.parseInt(pluginInstance.playerProgression.get(player.getName()+":"+player.getUniqueId() + ".pendingAdvancement").toString());
+            pluginInstance.grantAdvancement(adID, player);
+        }catch (Exception ignored){}
 
     }
     private void initPlayer(Player player, SoulWars pluginInstance){
+
         playerSouls = pluginInstance.getPlayerSouls();
         pluginInstance.advancementTab.showTab(player);
         String playerPath = player.getName() + ":" + player.getUniqueId();
@@ -169,9 +181,10 @@ public class Events implements Listener{
             }
         };
         bukkitRunnable.runTaskTimer(pluginInstance, 0, 10L);
-        initScoreBoard(player);
-        ItemStack itemStack = pluginInstance.itemManager.getHandler(SoulShard.class).getItem(player);
+        updateScoreBoard(player);
+        ItemStack itemStack = pluginInstance.itemManager.getHandler(ReviveBeacon.class).getItem(player);
         player.getInventory().addItem(itemStack);
+
     }
     private void progressionCheck(Player player){
         //Let's start by checking for light levels for Vulto
@@ -182,7 +195,7 @@ public class Events implements Listener{
                 .get((SoulWars.advancements.Vulto.getIndex()));
         String adPath = "given"+ (SoulWars.advancements.Vulto.getIndex());
         String adOwner = Objects.requireNonNull(pluginInstance.getConfig().get(adPath)).toString();
-        int vultotickCount = 1000;
+        int vultotickCount = 10;
         if(adOwner.equals("0") && !hasAdvancement(SoulWars.advancements.Vulto, player)){
             if(Math.max(lightLevel, sunlightLevel) < 2){ //If player is standing in light level 2 or below
                 if(player.hasMetadata("vultotick")){
@@ -190,38 +203,60 @@ public class Events implements Listener{
                     player.removeMetadata("vultotick", pluginInstance);
                 }
                 if(vultotickCount > 480000){
-                    Bukkit.getLogger().info("Unlocked vulto");
                     pluginInstance.getAdvancement(10).grant(player);
                 }
             }else{ // else, reset, failed
+
                 vultotickCount = 0;
             }
 
             player.setMetadata("vultotick", new FixedMetadataValue(pluginInstance, vultotickCount));
         }
-
+        adPath = "given"+(SoulWars.advancements.Oceano.getIndex());
+        adOwner = Objects.requireNonNull(pluginInstance.getConfig().get(adPath)).toString();
+        if(adOwner.equals("0") && !hasAdvancement(SoulWars.advancements.Oceano, player)){
+            // 1000000
+            if(player.getStatistic(Statistic.SWIM_ONE_CM) >= 1000000){
+                pluginInstance.grantAdvancement(SoulWars.advancements.Oceano, player);
+            }
+        }
+        adPath = "given"+(SoulWars.advancements.Nether.getIndex());
+        adOwner = Objects.requireNonNull(pluginInstance.getConfig().get(adPath)).toString();
+        if(adOwner.equals("0") && !hasAdvancement(SoulWars.advancements.Nether, player)){
+            // 1000000
+            if(player.getStatistic(Statistic.STRIDER_ONE_CM) >= 500000){
+                pluginInstance.grantAdvancement(SoulWars.advancements.Nether, player);
+            }
+        }
+        adPath = "given"+(SoulWars.advancements.Cowboy.getIndex());
+        adOwner = Objects.requireNonNull(pluginInstance.getConfig().get(adPath)).toString();
+        if(adOwner.equals("0") && !hasAdvancement(SoulWars.advancements.Cowboy, player)){
+            // 1000000
+            if(player.getStatistic(Statistic.HORSE_ONE_CM) >= 10000000){
+                pluginInstance.grantAdvancement(SoulWars.advancements.Nether, player);
+            }
+        }
     }
-    private void initScoreBoard(Player player){
+    public void updateScoreBoard(Player player){
         Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective obj = board.registerNewObjective("ServerName", "dummy", ChatColor.BOLD+ "Soul Wars");
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        String[] traitID = {"oc", "oh","ep","id","ie","3h","ok","od","dd","dn","na","nl",
-                "nn"};
-
 
 
         AtomicInteger i = new AtomicInteger();
-
-        for (String s : traitID) {
+        boolean hasNor = false;
+        for (String s : TraitsManager.traitID) {
+            Bukkit.getLogger().info(s);
             if(player.hasMetadata(s)){
 
                 List<String> effects = (List<String>) player.getMetadata(s).get(0).value();
 
                 AtomicBoolean hasEffect = new AtomicBoolean(false);
                     effects.forEach(e -> {
+                        Bukkit.getLogger().info(e);
                         hasEffect.set(true);
-                        Score aux2 = obj.getScore( ChatColor.DARK_PURPLE + "-> " + e);
+                        Score aux2 = obj.getScore( ChatColor.DARK_PURPLE + "-> " +pluginInstance.getText(e));
                         aux2.setScore(i.get());
                         i.getAndIncrement();
                     });
@@ -229,15 +264,18 @@ public class Events implements Listener{
 
                         Score aux = obj.getScore(ChatColor.GREEN + pluginInstance.getText(s) + ":");
                         aux.setScore(i.get());
+                        hasNor = true;
                         i.getAndIncrement();
                     }
 
             }
         }
+        if(hasNor){
+            Score aux4 = obj.getScore( ChatColor.BOLD + "Traços Normais:");
+            aux4.setScore(i.get());
+            i.getAndIncrement();
+        }
 
-        Score aux4 = obj.getScore( ChatColor.BOLD + "Traços Normais:");
-        aux4.setScore(i.get());
-        i.getAndIncrement();
         boolean hasLen = false;
         for (SoulWars.advancements c : SoulWars.advancements.values()) {
             if(hasAdvancement(c, player)){
@@ -249,12 +287,14 @@ public class Events implements Listener{
             }
 
         }
+        if(hasLen){
+            Score aux3 = obj.getScore( ChatColor.BOLD + "Traços Lendários:");
+            aux3.setScore(i.get());
+            i.getAndIncrement();
+        }
 
-        Score aux3 = obj.getScore( ChatColor.BOLD + "Traços Lendários:");
-        aux3.setScore(i.get());
-        i.getAndIncrement();
-        player.setScoreboard(board);
-
+        if((hasLen|| hasNor))player.setScoreboard(board);
+        else player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
 
     }
     @EventHandler
@@ -290,6 +330,14 @@ public class Events implements Listener{
                 playerInventory.removeItem(new ItemStack(blockData.getMaterial()));
                 playerInventory.addItem(new ItemStack(blockData.getMaterial()));
             }
+        }
+    }
+    @EventHandler
+    private void onPlayerInteract(PlayerInteractEvent e){
+        if(e.getAction() == Action.RIGHT_CLICK_BLOCK){
+            Player player = e.getPlayer();
+            Block block = e.getClickedBlock();
+
         }
     }
     @EventHandler
@@ -330,6 +378,41 @@ public class Events implements Listener{
             }
         }
     @EventHandler
+    private void PlayerTameEvent(EntityTameEvent e){
+        Player tamer = (Player) e.getOwner();
+        String playerPath = tamer.getName() + ":" + tamer.getUniqueId();
+        String entityType = e.getEntity().getType().getKey()
+                .toString().replace("minecraft:", "").toUpperCase();
+        if(e.getEntity() instanceof  Wolf wolf){
+            if (hasAdvancement(SoulWars.advancements.Lide, tamer)) {
+                wolf.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,
+                        PotionEffect.INFINITE_DURATION, 1));
+            }else{
+                int tamed = pluginInstance.playerProgression.getInt(playerPath+".wolves");
+                tamed ++;
+                pluginInstance.playerProgression.set(playerPath+".wolves", tamed);
+                if(tamed >= 500){
+                    pluginInstance.grantAdvancement(SoulWars.advancements.Lide, tamer);
+                }
+            }
+        }
+        List<String> bombed = (List<String>)
+                pluginInstance.playerProgression.getList(playerPath+".melee");
+        if(null == bombed) bombed = new ArrayList<>();
+        if(!bombed.contains(entityType)){
+            bombed.add(entityType);
+            pluginInstance.playerProgression.set(playerPath+".tamed", bombed);
+
+        }
+        List<String> missingList = checkIfAllTamed(bombed);
+        if(missingList.isEmpty()){
+            pluginInstance.grantAdvancement(SoulWars.advancements.Shama,tamer);
+        }else{
+            tamer.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Shamã" + ChatColor.YELLOW + " Agora só falta(m)");
+            tamer.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+        }
+    }
+    @EventHandler
     public void onPlayerMoveEvent(PlayerMoveEvent e) {
         Player player = e.getPlayer();
         if (hasAdvancement(SoulWars.advancements.Nether, player)) {
@@ -361,6 +444,7 @@ public class Events implements Listener{
     @EventHandler
     public void onEntityDeathEvent(EntityDeathEvent e){
         Player player = e.getEntity().getKiller();
+        LivingEntity entity = e.getEntity();
         if(player != null){
             if(player.hasMetadata("ok")){
                 applyEffects(player, player.getMetadata("ok").get(0).value(), 120 );
@@ -384,22 +468,69 @@ public class Events implements Listener{
 
             }
         }else if(e.getEntity() instanceof  Player player){
+            String playerPath = player.getName() + ":" + player.getUniqueId();
             boolean isFallDamage =
                     cause == EntityDamageEvent.DamageCause.FALL || cause == EntityDamageEvent.DamageCause.FLY_INTO_WALL;
             boolean isVoidDamage = cause == EntityDamageEvent.DamageCause.VOID;
+            boolean killingBlow = player.getHealth() - e.getFinalDamage() <= 0;
             if(hasAdvancement(SoulWars.advancements.Cabra, player) && isFallDamage){
                 e.setCancelled(true);
+            }else if(isFallDamage && killingBlow){
+                int fallDeaths = pluginInstance.playerProgression.getInt(playerPath+".fallDeath");
+                fallDeaths ++;
+                pluginInstance.playerProgression.set(playerPath+".fallDeath", fallDeaths);
+                if(fallDeaths >= 100){
+                    pluginInstance.grantAdvancement(SoulWars.advancements.Cabra, player);
+                }
             }
             if(hasAdvancement(SoulWars.advancements.Void, player) && isVoidDamage){
                 voidBornFrostWalker(player);
                 e.setCancelled(true);
-            }
-            if(player.hasMetadata("id")){
-                List<String> damageI = (List<String>) player.getMetadata("id").get(0).value();
-                if(damageI.contains(cause.toString())){
-                    e.setCancelled(true);
+            }else if( isVoidDamage && killingBlow){
+                int voidDeaths = pluginInstance.playerProgression.getInt(playerPath+".voidDeath");
+                voidDeaths ++;
+                pluginInstance.playerProgression.set(playerPath + ".voidDeath", voidDeaths);
+                if(voidDeaths >= 100){
+                    pluginInstance.grantAdvancement(SoulWars.advancements.Void, player);
                 }
             }
+            if(player.hasMetadata("imd")){
+                List<String> damageI = (List<String>) player.getMetadata("imd").get(0).value();
+                if(damageI.contains(cause.toString())){
+                    e.setCancelled(true);
+                }else if(Arrays.stream(TraitsManager.fireDamage).toList().contains(cause.toString()))e.setCancelled(true);
+
+            }
+        }else if(e.getEntity() instanceof  LivingEntity damaged) {
+            String entityType = damaged.getType().getKey()
+                    .toString().replace("minecraft:", "").toUpperCase();
+            if (e.getCause() == EntityDamageEvent.DamageCause.ENTITY_EXPLOSION || e.getCause() == EntityDamageEvent.DamageCause.BLOCK_EXPLOSION) {
+                if (Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth() - e.getFinalDamage() <= 0) {
+                    damaged.getNearbyEntities(6, 6, 6).forEach(entity -> {
+                        if (entity instanceof Player player) {
+                            String playerPath = player.getName() + ":" + player.getUniqueId();
+                            List<String> bombed = (List<String>)
+                                    pluginInstance.playerProgression.getList(playerPath + ".bomb");
+                            if (null == bombed) bombed = new ArrayList<>();
+                            if (!bombed.contains(entityType)) {
+                                bombed.add(entityType);
+                                pluginInstance.playerProgression.set(playerPath + ".bomb", bombed);
+                                Bukkit.getLogger().info("Player " + player.getName() + " killed his first " + entityType + " using bomb");
+
+                            }
+                            List<String> missingList = checkIfAllHostilesGotKilled(bombed);
+                            if(missingList.isEmpty()){
+                                pluginInstance.grantAdvancement(SoulWars.advancements.Bomba,player);
+                            }else{
+                                player.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Bombardeador" + ChatColor.YELLOW + " Agora só falta(m)");
+                                player.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+                            }
+                        }
+                    });
+
+                }
+            }
+
         }
     }
     @EventHandler
@@ -412,8 +543,14 @@ public class Events implements Listener{
     }
     @EventHandler
     public void onEntityDamageEntity(EntityDamageByEntityEvent e){
+
         if(e.getEntity() instanceof  LivingEntity damaged){
+            EntityDamageEvent.DamageCause cause =  e.getCause();
+            String entityType = damaged.getType().getKey()
+                    .toString().replace("minecraft:","").toUpperCase();
             if(e.getDamager() instanceof Player player){
+                String playerPath = player.getName() + ":" + player.getUniqueId();
+
                 if(player.hasMetadata("3h")){
                     int count = 0;
                     if(damaged.hasMetadata("got3hed")){
@@ -427,13 +564,118 @@ public class Events implements Listener{
                     }
                     damaged.setMetadata("got3hed", new FixedMetadataValue(pluginInstance, count));
                 }
+                Bukkit.getLogger().info(damaged.getType().getKey().toString() + " "+ entityType);
+                if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0){ //Entity will die
+
+                    if(cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK
+                            || cause == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK || cause == EntityDamageEvent.DamageCause.CONTACT)
+                    {
+                       List<String> bombed = (List<String>)
+                               pluginInstance.playerProgression.getList(playerPath+".melee");
+                       if(null == bombed) bombed = new ArrayList<>();
+                       if(!bombed.contains(entityType)){
+                           bombed.add(entityType);
+                           pluginInstance.playerProgression.set(playerPath+".melee", bombed);
+                           Bukkit.getLogger().info("Player "+ player.getName() + " killed his first "+ entityType + " using melee");
+                           //MUST SAVE
+                       }
+                        List<String> missingList = checkIfAllHostilesGotKilled(bombed);
+                        if(missingList.isEmpty()){
+                            pluginInstance.grantAdvancement(SoulWars.advancements.Guerra,player);
+                        }else{
+                            player.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Guerreiro" + ChatColor.YELLOW + " Agora só falta(m)");
+                            player.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+                        }
+                    }
+                }
+            }else if(e.getDamager() instanceof  Projectile projectile && projectile.getShooter() instanceof Player player){
+                if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0){
+                    String playerPath = player.getName() + ":" + player.getUniqueId();
+                    if(cause == EntityDamageEvent.DamageCause.PROJECTILE) {
+                        List<String> bombed = (List<String>)
+                                pluginInstance.playerProgression.getList(playerPath + ".ranged");
+                        if (null == bombed) bombed = new ArrayList<>();
+                        if (!bombed.contains(entityType)) {
+                            bombed.add(entityType);
+                            pluginInstance.playerProgression.set(playerPath + ".ranged", bombed);
+                            Bukkit.getLogger().info("Player " + player.getName() + " killed his first " + entityType + " using ranged");
+                            //MUST SAVE
+                        }
+                        List<String> missingList = checkIfAllHostilesGotKilled(bombed);
+                        if(missingList.isEmpty()){
+                            pluginInstance.grantAdvancement(SoulWars.advancements.Franco,player);
+                        }else{
+                            player.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Francoatirador" + ChatColor.YELLOW + " Agora só falta(m)");
+                            player.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+                        }
+                    }else if(cause == EntityDamageEvent.DamageCause.MAGIC || cause == EntityDamageEvent.DamageCause.POISON || cause == EntityDamageEvent.DamageCause.WITHER){
+                        List<String> bombed = (List<String>)
+                                pluginInstance.playerProgression.getList(playerPath+".magic");
+                        if(null == bombed) bombed = new ArrayList<>();
+                        if(!bombed.contains(entityType)) {
+                            bombed.add(entityType);
+                            pluginInstance.playerProgression.set(playerPath + ".magic", bombed);
+                            Bukkit.getLogger().info("Player " + player.getName() + " killed his first " + entityType+ " using magic");
+                            //MUST SAVE
+                        }
+                        List<String> missingList = checkIfAllHostilesGotKilled(bombed);
+                        if(missingList.isEmpty()){
+                            pluginInstance.grantAdvancement(SoulWars.advancements.Alquimista,player);
+                        }else{
+                            player.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Alquimista" + ChatColor.YELLOW + " Agora só falta(m)");
+                            player.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+                        }
+                    }
+
+                }
+            }else if(e.getDamager() instanceof  TNTPrimed  tnt   && tnt.getSource() instanceof Player player){
+                if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0) {
+                    String playerPath = player.getName() + ":" + player.getUniqueId();
+                    List<String> bombed = (List<String>)
+                            pluginInstance.playerProgression.getList(playerPath+".bomb");
+                    if(null == bombed) bombed = new ArrayList<>();
+                    if(!bombed.contains(entityType)) {
+                        bombed.add(entityType);
+                        pluginInstance.playerProgression.set(playerPath + ".bomb", bombed);
+                        Bukkit.getLogger().info("Player " + player.getName() + " killed his first " + entityType + " using bomb");
+                        //MUST SAVE
+                    }
+                    List<String> missingList = checkIfAllHostilesGotKilled(bombed);
+                    if(missingList.isEmpty()){
+                        pluginInstance.grantAdvancement(SoulWars.advancements.Bomba,player);
+                    }else{
+                        player.sendMessage(ChatColor.BOLD+ ""+ ChatColor.YELLOW + "Você avançou na conquista " + ChatColor.LIGHT_PURPLE + "Bombardeador" + ChatColor.YELLOW + " Agora só falta(m)");
+                        player.sendMessage( ChatColor.YELLOW + "O(s) Mob(s): " + ChatColor.RESET + " " +missingList.toString());
+                    }
+                }
             }
         }
-
     }
+
+
     @EventHandler
     private void playerDeathEvent(PlayerDeathEvent e){
+        ItemStack itemStack = pluginInstance.itemManager.getHandler(SoulShard.class).getItem(e.getEntity());
+        e.getDrops().add(itemStack);
 
+    }
+    private List<String> checkIfAllHostilesGotKilled(List<String> killed){
+        List<String> list = new ArrayList<>();
+        for (String s : TraitsManager.hostileMob) {
+            if(!killed.contains(s)) {
+                list.add(s);
+            }
+        }
+        return list;
+    }
+    private List<String> checkIfAllTamed(List<String> killed){
+        List<String> list = new ArrayList<>();
+        for (String s : TraitsManager.tamableMob) {
+            if(!killed.contains(s)) {
+                list.add(s);
+            }
+        }
+        return list;
     }
     private ItemStack getProjectileItemStack(Projectile projectile) {
         ItemStack itemStack = new ItemStack(Material.AIR);

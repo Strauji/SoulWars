@@ -16,20 +16,22 @@ import java.util.function.Supplier;
 
 public class TraitsManager {
     //oh- ep- id- ie= 3h- ok- dd- dn- na- nl- nn-
-    static String[] traitID = { "oh","ep","id","ie","3h","ok","dd","dn","na","nl",
+    static String[] traitID = { "oh","ep","imd","ie","3h","ok","dd","dn","na","nl",
     "nn"};
-    static String[] goodTraitID = {"ep","dd","dn","do","na","nl","ok"};
+    static String[] goodTraitID = {"ep","dd","dn","do","na","nl", "nn","ok"};
     static String[] badTraitID ={"oh", "3h", "ie", "od"};
-    static String[] otherTraitID = {"id", "od", "cd","oc"};
-    static String[] goodEffects = {"ABSORPTION", "CONDUIT_POWER","DAMAGE_RESISTANCE", "DOLPHINS_GRACE","FAST_DIGGING",
-            "FIRE_RESISTANCE", "HEALTH_BOOST","HERO_OF_THE_VILLAGE", "INCREASE_DAMAGE","INVISIBILITY","JUMP",
-    "NIGHT_VISION","REGENERATION","SATURATION","SPEED","WATER_BREATHING","SLOW_FALLING"};
-    static String[] badEffects = {"WEAKNESS","WITHER","SLOW_DIGGING","SLOW","POISON","LEVITATION","HUNGER","HARM","DARKNESS",
-    "CONFUSION","BLINDNESS","BAD_OMEN"};
-    static String[] damageTypes= {"CONTACT","DRAGON_BREATH","DROWNING","ENTITY_EXPLOSION","FALL","FIRE","FIRE_TICK",
+    static String[] otherTraitID = {"imd", "od", "cd","oc"};
+    static String[] goodEffects = { "CONDUIT_POWER","DAMAGE_RESISTANCE", "DOLPHINS_GRACE","FAST_DIGGING",
+            "FIRE_RESISTANCE", "HERO_OF_THE_VILLAGE", "INCREASE_DAMAGE","INVISIBILITY","JUMP",
+    "NIGHT_VISION","REGENERATION","SPEED","WATER_BREATHING","SLOW_FALLING"};
+    static String[] badEffects = {"WEAKNESS","WITHER","SLOW_DIGGING","SLOW","POISON","DARKNESS"};
+    static String[] damageTypes= {"CONTACT","DRAGON_BREATH","DROWNING","FIRE","FIRE_TICK",
             "FLY_INTO_WALL", "FREEZE","HOT_FLOOR","LAVA","LIGHTNING","MAGIC","POISON","SONIC_BOOM","STARVATION","SUFFOCATION",
             "WITHER"
     };
+    static  String[] fireDamage = {"LAVA", "HOT_FLOOR", "FIRE", "FIRE_TICK"};
+    static  String[] hostileMob = {"BLAZE", "CAVE_SPIDER","CREEPER","DROWNED","ELDER_GUARDIAN", "ENDER_DRAGON","ENDERMITE","GHAST","GUARDIAN","HOGLIN","HUSK","MAGMA_CUBE","PHANTOM","PIGLIN", "PIGLIN_BRUTE","PILLAGER","PUFFERFISH","RAVAGER","SHULKER","SKELETON","SLIME","SPIDER","VINDICATOR","WARDEN","WITHER","ZOGLIN","ZOMBIE"};
+    static  String[] tamableMob = {"CAT","DONKEY", "HORSE","LLAMA","MULE", "PARROT", "SKELETON_HORSE", "ZOMBIE_HORSE", "WOLF","FOX", "OCELOT"};
     public static Map<String, PotionEffectType> stringToEffect;
     static {
         stringToEffect = new HashMap<>();
@@ -85,14 +87,15 @@ public class TraitsManager {
                 switch (trait) {
                     //  case "ae": //Aura of effect
                     //    break;
-                    case "id", "cd" -> {
+                    case "imd", "cd" -> {
                         int value = rand.nextInt(damageAux.size());
                         traitEffect = damageAux.get(value);
                         damageAux.remove(value);
+
                     }
                     //Heals with damage
-                    case "od" -> {
-                    } //on death
+                   // case "od" -> {
+                 //   } //on death
                     //custom
                 }
             }
@@ -117,17 +120,15 @@ public class TraitsManager {
     public static void readTraits(FileConfiguration soulsFile, Player player, Plugin pluginInstance){
         Arrays.stream(traitID).toList().forEach(s -> {
                 List<String> traits = getTrait(soulsFile, player, s);
+
+
                 if(null != traits){
+
                     List<String> effects = new ArrayList<>();
-                    traits.forEach(s1 -> {
-                        if(stringToEffect.containsKey(s1)){
-                            effects.add(s1);
-
-                        }
-
-                    });
+                    effects.addAll(traits);
 
                     player.setMetadata(s, new FixedMetadataValue(pluginInstance, effects));
+
                 }
 
         });

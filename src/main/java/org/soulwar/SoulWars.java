@@ -6,18 +6,26 @@ import com.fren_gor.ultimateAdvancementAPI.advancement.Advancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.BaseAdvancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.RootAdvancement;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 
 public class SoulWars extends JavaPlugin implements Listener {
@@ -28,7 +36,7 @@ public class SoulWars extends JavaPlugin implements Listener {
     private File localizationFile;
     private FileConfiguration localization;
     public FileConfiguration playerSouls;
-    private FileConfiguration playerProgression;
+    public FileConfiguration playerProgression;
     public UltimateAdvancementAPI api ;
 
     public AdvancementTab advancementTab;
@@ -65,6 +73,7 @@ public class SoulWars extends JavaPlugin implements Listener {
             return this.index;
         }
     }
+    public Events events;
     @Override
     public void onLoad() {
         main = new AdvancementMain(this);
@@ -85,14 +94,9 @@ public class SoulWars extends JavaPlugin implements Listener {
         readConfig();
         readLocalization();
         challengerManager.initializeAdvancements(this);
-
-
-
-
-
         Bukkit.getPluginManager().registerEvents(this, this);
-
-        Bukkit.getPluginManager().registerEvents(new Events(), this);
+        events = new Events();
+        Bukkit.getPluginManager().registerEvents(events, this);
         this.getCommand("sw").setExecutor(new Commands());
         badPotionEffects.add("BAD_OMEN");
         badPotionEffects.add("INSTANT_DAMAGE");
@@ -107,7 +111,24 @@ public class SoulWars extends JavaPlugin implements Listener {
         badPotionEffects.add("WEAKNESS");
         badPotionEffects.add("LEVITATION");
         itemManager = new ItemManager(this);
-
+        ItemStack item = itemManager.getHandler(ReviveBeacon.class).getItem(null);
+        NamespacedKey key = new NamespacedKey(this, "revivebeacon");
+        ShapedRecipe recipe = new ShapedRecipe(key, item);
+        recipe.shape("DGD", "TBT", "DGD");
+        recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+        recipe.setIngredient('G', Material.GOLDEN_APPLE);
+        recipe.setIngredient('B', Material.BEACON);
+        recipe.setIngredient('T', Material.TOTEM_OF_UNDYING);
+        Bukkit.addRecipe(recipe);
+        BukkitRunnable bukkitRunnable = new BukkitRunnable() {
+            @Override
+            public void run() {
+                saveSouls();
+                saveProgression();
+                saveConfig();
+            }
+        };
+        bukkitRunnable.runTaskTimer(this, 6000L, 6000L);
     }
     private void readLocalization(){
         localizationFile = new File(getDataFolder(), langFile);
@@ -165,8 +186,8 @@ public class SoulWars extends JavaPlugin implements Listener {
     public void resetPlayer(Player player){
         String playerPath = player.getName() + ":" + player.getUniqueId();
         playerSouls.set(playerPath+".played", false);
-        String[] traitID = {"oc", "oh","ep","id","ie","3h","ae","ok","od","uc","fc","dd","dn","dn","na","nl","nn"};
-        Arrays.stream(traitID).toList().forEach(s -> {
+
+        Arrays.stream(TraitsManager.traitID).toList().forEach(s -> {
             playerSouls.set(playerPath+"."+s, "---");
         });
         saveSouls();
@@ -225,6 +246,7 @@ public class SoulWars extends JavaPlugin implements Listener {
             getConfig().set(adPath, playerPath);
             saveConfig();
         }
+        events.updateScoreBoard(player);
 
     }
     public void revokeAvancement(int adIndex, Player player){
@@ -240,6 +262,7 @@ public class SoulWars extends JavaPlugin implements Listener {
             getConfig().set(adPath,0);
             saveConfig();
         }
+        events.updateScoreBoard(player);
 
     }
     public void onDisable() {
