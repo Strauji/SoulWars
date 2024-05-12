@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -32,7 +33,7 @@ public class SoulShard extends AbstractItem{
     @Override
     protected ItemStack generateItem(ItemStack itemStack, Player player) {
         ItemMeta itemMeta = itemStack.getItemMeta();
-        String name;
+        String name = "Isso é um bug, reporte-o por favor no nosso Discord";
         if(Math.random() <= 0.3 || getPlayerAdvancements(player).isEmpty()){
             boolean removed = false;
             for (String trait : TraitsManager.traitID) {
@@ -45,8 +46,8 @@ public class SoulShard extends AbstractItem{
                         effectTrigger = trait;
                         effect = effects.get(0);
                         lore.add( effect+" - " +trait);
-                        name = ChatColor.LIGHT_PURPLE + pluginInstance.getText(effect) + ChatColor.RESET +
-                                " - " + ChatColor.GREEN + pluginInstance.getText(trait);
+                        name = ChatColor.AQUA + pluginInstance.getText(trait) + ChatColor.RESET +
+                                " - " + ChatColor.GREEN + pluginInstance.getText(effect);
                         effects.remove(0);
                         player.removeMetadata(trait, pluginInstance);
 
@@ -60,17 +61,18 @@ public class SoulShard extends AbstractItem{
                         itemMeta.setLore(lore);
                         pluginInstance.saveSouls();
                         removed = true;
+                        Bukkit.broadcastMessage(player.getName() + " perdeu o traço "+ name);
                         break;
                     }
 
                 }
             }
             if(!removed) name = removeAdvancement(player, itemMeta);
-        }name = removeAdvancement(player, itemMeta) ;
+        }else name = removeAdvancement(player, itemMeta) ;
 
         itemMeta.setDisplayName(name);
-     //   itemMeta.setUnbreakable(true);
-     //   itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
+        itemMeta.setUnbreakable(true);
+        itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE);
         ((Damageable)itemMeta).setDamage(1);
         itemMeta.setUnbreakable(true);
         itemStack.setItemMeta(itemMeta);
@@ -127,7 +129,10 @@ public class SoulShard extends AbstractItem{
         Player player = e.getPlayer();
         ItemStack itemStack = player.getInventory().getItemInMainHand();
         if(!isApplicable(itemStack)) return;
-        if(getPlayerTraitAmount(player) < 5) return;
+        if(getPlayerTraitAmount(player) >= 5) {
+            player.sendMessage(ChatColor.BOLD + "[SoulWars] "+ChatColor.RESET + "Você não pode ter mais que 5 traços.");
+            return;
+        }
         List<String> lore = itemStack.getItemMeta().getLore();
         lore.forEach(s -> {
                 String[] data = s.split(" - ");
@@ -138,7 +143,7 @@ public class SoulShard extends AbstractItem{
                             int advancementId = Integer.parseInt(data[1]);
                             Advancement advancement1 = pluginInstance.challengerManager.advancementMap.get
                                     (advancementId);
-                            Bukkit.getLogger().info("Advancement " + advancementId +advancement1.getDisplay().getTitle());
+                          //  Bukkit.getLogger().info("Advancement " + advancementId +advancement1.getDisplay().getTitle());
                             pluginInstance.grantAdvancement(advancementId, player);
                         }else if(!isNumeric(data[1])){
                             String playerPath = player.getName() + ":" + player.getUniqueId();
@@ -147,20 +152,33 @@ public class SoulShard extends AbstractItem{
                             if(null == playerTraits ) playerTraits = new ArrayList<>();
                             playerTraits.add(data[0]);
                             pluginInstance.playerSouls.set(playerPath+"."+data[1], playerTraits);
-                            Bukkit.getLogger().info("Adding " + data[0] + " "+ data[1]);
+                       //     Bukkit.getLogger().info("Adding " + data[0] + " "+ data[1]);
+                           String name = ChatColor.AQUA + pluginInstance.getText(data[1]) + ChatColor.RESET +
+                                    " - " + ChatColor.GREEN + pluginInstance.getText(data[0]);
+                            Bukkit.broadcastMessage(player.getName() + " ganhou o traço "+ name);
                             pluginInstance.saveSouls();
+                        }else if(getPlayerAdvancements(player).size() >= 2){
+                            player.sendMessage(ChatColor.BOLD + "[SoulWars] "+ChatColor.RESET + "Você não pode ter mais que 2 traços lendários.");
+                            return;
                         }
                         player.getInventory().setItemInMainHand(null);
+                        
                         //remember to make it not be unlockable after becoming a item
 
 
-                }
+                }else player.sendMessage(ChatColor.BOLD + "[SoulWars] "+ChatColor.RESET + "Isso é um bug, reporte o no nosso Discord por favor.");
+
             });
         pluginInstance.events.updateScoreBoard(player);
 
 
 
       //  player.getWorld().strikeLightning(player.getLocation());
+    }
+    @EventHandler
+    private void itemDespawn(ItemDespawnEvent e){
+        if(!isApplicable(e.getEntity().getItemStack())) return;
+        e.setCancelled(true);
     }
     public static boolean isNumeric(String strNum) { //Thx https://www.baeldung.com/java-check-string-number
         if (strNum == null) {

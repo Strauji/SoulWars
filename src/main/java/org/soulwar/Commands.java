@@ -62,6 +62,11 @@ public class Commands implements CommandExecutor{
 
                    }
                    break;
+               case "reload":
+                   if(sender.isOp()){
+                       pluginInstance.reload();
+                   }
+                   break;
            }
        }
         return false;

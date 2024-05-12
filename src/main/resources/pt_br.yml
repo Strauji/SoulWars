@@ -28,9 +28,9 @@ alquimistaDesc: Mate todos os mobs agressivos usando poções
 bombaNome: Bombardeador
 bombaDesc: Mate todos os mobs agressivos usando explosões
 matilhaNome: Líder da Matilha
-matilhaDesc: Mate todos os mobs agressivos usando lobos
+matilhaDesc: Domestique 500 lobos
 netherNome: Abençoado pelo Nether
-netherDesc: Atravesse 7km dentro do Nether de uma só vez
+netherDesc: Ande 5km usando um Strider
 oceanoNome: Talassofílico
 oceanoDesc: Nade 7km
 shamaNome: Shamã
@@ -70,7 +70,7 @@ SPEED: Velocidade
 WATER_BREATHING: Respiração
 SLOW_FALLING: Queda Lenta
 WEAKNESS: Fraqueza
-SLOW_DIGGING: Fádiga
+SLOW_DIGGING: Fadiga
 SLOW: Lentidão
 POISON: Envenenamento
 DARKNESS: Escuridão
@@ -84,7 +84,6 @@ HOT_FLOOR: Magma
 FLY_INTO_WALL: Impacto
 FREEZE: Congelamento
 MAGIC: Magia
-POISON: Envenenamento
 SONIC_BOOM: Ataque Sonoro
 STARVATION: Fome
 SUFFOCATION: Sufocament

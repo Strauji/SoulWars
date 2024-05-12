@@ -56,10 +56,14 @@ public class Events implements Listener{
             int adID = Integer.parseInt(pluginInstance.playerProgression.get(player.getName()+":"+player.getUniqueId() + ".pendingAdvancement").toString());
             pluginInstance.grantAdvancement(adID, player);
         }catch (Exception ignored){}
+        updateScoreBoard(player);
 
     }
     private void initPlayer(Player player, SoulWars pluginInstance){
-
+        AttributeModifier shadowAttribute = new AttributeModifier(
+                nonRandomUUIDGenerator(player.getUniqueId(), pluginInstance.speedUUIDMOD, 'a')
+                ,"livingShadow", 0
+                , AttributeModifier.Operation.MULTIPLY_SCALAR_1);
         playerSouls = pluginInstance.getPlayerSouls();
         pluginInstance.advancementTab.showTab(player);
         String playerPath = player.getName() + ":" + player.getUniqueId();
@@ -100,28 +104,35 @@ public class Events implements Listener{
                     this.cancel();
                     return;
                 }
-                if(player.hasMetadata("ep") )applyEffects (player, player.getMetadata("ep").get(0).value());
+                if(player.hasMetadata("ep") )applyEffects (player, player.getMetadata("ep").get(0).value(),false);
 
 
                 if(player.hasMetadata("dd"))
-                    if(util_isDay(player)) applyEffects(player, player.getMetadata("dd").get(0).value());
+                    if(util_isDay(player)) applyEffects(player, player.getMetadata("dd").get(0).value(),false);
                 if(player.hasMetadata("dn"))
-                    if(!util_isDay(player)) applyEffects(player, player.getMetadata("dn").get(0).value());
+                    if(!util_isDay(player)) applyEffects(player, player.getMetadata("dn").get(0).value(),false);
                 if(player.hasMetadata("nn"))
                     if(player.getWorld().getEnvironment().equals(World.Environment.NETHER))
-                        applyEffects(player, player.getMetadata("nn").get(0).value());
+                        applyEffects(player, player.getMetadata("nn").get(0).value(),false);
                 if(player.hasMetadata("ne"))
                     if(player.getWorld().getEnvironment().equals(World.Environment.THE_END))
-                        applyEffects(player, player.getMetadata("ne").get(0).value());
+                        applyEffects(player, player.getMetadata("ne").get(0).value(),false);
                 if(player.hasMetadata("no"))
                     if(player.getWorld().getEnvironment().equals(World.Environment.NORMAL))
-                        applyEffects(player, player.getMetadata("no").get(0).value());
+                        applyEffects(player, player.getMetadata("no").get(0).value(),false);
                 if(player.hasMetadata("na"))
                     if( (player.getLocation().getBlock().getType() == Material.WATER))
-                        applyEffects(player, player.getMetadata("na").get(0).value());
+                        applyEffects(player, player.getMetadata("na").get(0).value(),false);
                 if(player.hasMetadata("nl"))
                     if( (player.getLocation().getBlock().getType() == Material.LAVA))
-                        applyEffects(player, player.getMetadata("na").get(0).value());
+                        applyEffects(player, player.getMetadata("na").get(0).value(),false);
+                try{
+                    Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED))
+                            .removeModifier(shadowAttribute);
+
+                    Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE))
+                            .removeModifier(shadowAttribute);
+                }catch (Exception ignored){}
                 if(hasAdvancement(SoulWars.advancements.Vulto, player)){
                     Block stepBlock = player.getLocation().getBlock().getRelative(0, 1, 0); //Help me ste-....
                     int lightLevel = stepBlock.getLightLevel();
@@ -133,13 +144,7 @@ public class Events implements Listener{
                             nonRandomUUIDGenerator(player.getUniqueId(), pluginInstance.speedUUIDMOD, 'a')
                             ,"livingShadow", shadowPower*0.1
                             , AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-                    try{
-                        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED))
-                                .removeModifier(shadowAttribute);
 
-                        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE))
-                                .removeModifier(shadowAttribute);
-                    }catch (Exception ignored){}
                     Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED))
                             .addModifier(shadowAttribute);
                     Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE))
@@ -151,7 +156,7 @@ public class Events implements Listener{
 
                         if(!(pluginInstance.badPotionEffects.contains(potionEffect.getType().getKey()
                                 .toString().replace("minecraft:", "").toUpperCase()))){
-                            player.addPotionEffect(new PotionEffect(potionEffect.getType(), 10000000
+                            player.addPotionEffect(new PotionEffect(potionEffect.getType(), PotionEffect.INFINITE_DURATION
                                     , potionEffect.getAmplifier()));
 
                         }
@@ -178,12 +183,13 @@ public class Events implements Listener{
                     });
                 }
                 progressionCheck(player);
+                updateScoreBoard(player);
             }
         };
-        bukkitRunnable.runTaskTimer(pluginInstance, 0, 10L);
-        updateScoreBoard(player);
-        ItemStack itemStack = pluginInstance.itemManager.getHandler(ReviveBeacon.class).getItem(player);
-        player.getInventory().addItem(itemStack);
+        bukkitRunnable.runTaskTimer(pluginInstance, 0, 80L);
+
+
+
 
     }
     private void progressionCheck(Player player){
@@ -247,16 +253,16 @@ public class Events implements Listener{
         AtomicInteger i = new AtomicInteger();
         boolean hasNor = false;
         for (String s : TraitsManager.traitID) {
-            Bukkit.getLogger().info(s);
+
             if(player.hasMetadata(s)){
 
                 List<String> effects = (List<String>) player.getMetadata(s).get(0).value();
 
                 AtomicBoolean hasEffect = new AtomicBoolean(false);
                     effects.forEach(e -> {
-                        Bukkit.getLogger().info(e);
+
                         hasEffect.set(true);
-                        Score aux2 = obj.getScore( ChatColor.DARK_PURPLE + "-> " +pluginInstance.getText(e));
+                        Score aux2 = obj.getScore( ChatColor.AQUA + "-> " +pluginInstance.getText(e));
                         aux2.setScore(i.get());
                         i.getAndIncrement();
                     });
@@ -279,7 +285,7 @@ public class Events implements Listener{
         boolean hasLen = false;
         for (SoulWars.advancements c : SoulWars.advancements.values()) {
             if(hasAdvancement(c, player)){
-                Score aux2 = obj.getScore( ChatColor.DARK_PURPLE + "->" +
+                Score aux2 = obj.getScore( ChatColor.AQUA + "->" +
                         pluginInstance.getText((c.toString().toLowerCase())+"Nome"));
                 aux2.setScore(i.get());
                 i.getAndIncrement();
@@ -332,14 +338,7 @@ public class Events implements Listener{
             }
         }
     }
-    @EventHandler
-    private void onPlayerInteract(PlayerInteractEvent e){
-        if(e.getAction() == Action.RIGHT_CLICK_BLOCK){
-            Player player = e.getPlayer();
-            Block block = e.getClickedBlock();
 
-        }
-    }
     @EventHandler
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent e) {
         if (e.getRightClicked() instanceof Tameable friendShaped) {
@@ -421,18 +420,18 @@ public class Events implements Listener{
                 if (nbCondition) player.setAllowFlight(true);
                 else player.setAllowFlight(pluginInstance.getServer().getAllowFlight());
                 player.setFlying(nbCondition);
-                BukkitRunnable bukkitRunnable = new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (player.getLocation().getBlock().getType() != Material.LAVA) {
-                            this.cancel();
-                            player.removeMetadata("netherblessing", pluginInstance);
-                            return;
-                        }
-                        player.setMetadata("netherblessing", new FixedMetadataValue(pluginInstance, true));
-                    }
-                };
-                bukkitRunnable.runTaskTimer(pluginInstance, 0L, 20L);
+             //   BukkitRunnable bukkitRunnable = new BukkitRunnable() {
+               //     @Override
+                //    public void run() {
+                 //       if (player.getLocation().getBlock().getType() != Material.LAVA) {
+                       //     this.cancel();
+                         //   player.removeMetadata("netherblessing", pluginInstance);
+                          //  return;
+                    //    }
+                    //    player.setMetadata("netherblessing", new FixedMetadataValue(pluginInstance, true));
+                  //  }
+             //   };
+               // bukkitRunnable.runTaskTimer(pluginInstance, 0L, 20L);
             }
         }
         if(hasAdvancement(SoulWars.advancements.Void, player)){
@@ -447,7 +446,7 @@ public class Events implements Listener{
         LivingEntity entity = e.getEntity();
         if(player != null){
             if(player.hasMetadata("ok")){
-                applyEffects(player, player.getMetadata("ok").get(0).value(), 120 );
+                applyEffects(player, player.getMetadata("ok").get(0).value(), true);
             }
 
         }
@@ -463,6 +462,7 @@ public class Events implements Listener{
                if (hasAdvancement(SoulWars.advancements.Cowboy, tamer)) {
                    if (friendShaped instanceof AbstractHorse horse){
                        e.setDamage(0);
+
                    }
                }
 
@@ -548,7 +548,9 @@ public class Events implements Listener{
             EntityDamageEvent.DamageCause cause =  e.getCause();
             String entityType = damaged.getType().getKey()
                     .toString().replace("minecraft:","").toUpperCase();
+            Player p = null;
             if(e.getDamager() instanceof Player player){
+                p = player;
                 String playerPath = player.getName() + ":" + player.getUniqueId();
 
                 if(player.hasMetadata("3h")){
@@ -559,12 +561,12 @@ public class Events implements Listener{
                     }
                     count++;
                     if(count >= 3){
-                        applyEffects(damaged, player.getMetadata("3h").get(0).value() );
+                        applyEffects(damaged, player.getMetadata("3h").get(0).value(), true );
                         count = 0;
                     }
                     damaged.setMetadata("got3hed", new FixedMetadataValue(pluginInstance, count));
                 }
-                Bukkit.getLogger().info(damaged.getType().getKey().toString() + " "+ entityType);
+
                 if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0){ //Entity will die
 
                     if(cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK
@@ -589,6 +591,7 @@ public class Events implements Listener{
                     }
                 }
             }else if(e.getDamager() instanceof  Projectile projectile && projectile.getShooter() instanceof Player player){
+                p = player;
                 if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0){
                     String playerPath = player.getName() + ":" + player.getUniqueId();
                     if(cause == EntityDamageEvent.DamageCause.PROJECTILE) {
@@ -629,6 +632,7 @@ public class Events implements Listener{
 
                 }
             }else if(e.getDamager() instanceof  TNTPrimed  tnt   && tnt.getSource() instanceof Player player){
+                p = player;
                 if(Arrays.stream(TraitsManager.hostileMob).toList().contains(entityType) && damaged.getHealth()-e.getFinalDamage() <= 0) {
                     String playerPath = player.getName() + ":" + player.getUniqueId();
                     List<String> bombed = (List<String>)
@@ -649,14 +653,29 @@ public class Events implements Listener{
                     }
                 }
             }
+            if(null != p){
+                damaged.setMetadata("damageer", new FixedMetadataValue(pluginInstance,p.getName()));
+
+                Bukkit.getScheduler().runTaskLater(pluginInstance, new Runnable() {
+                    @Override
+                    public void run() {
+                        if(damaged.hasMetadata("damageer"))damaged.removeMetadata("damageer", pluginInstance);
+                    }
+                }, 1000L);
+            }
+
         }
     }
 
 
     @EventHandler
     private void playerDeathEvent(PlayerDeathEvent e){
-        ItemStack itemStack = pluginInstance.itemManager.getHandler(SoulShard.class).getItem(e.getEntity());
-        e.getDrops().add(itemStack);
+        if(e.getEntity().hasMetadata("damageer") &&
+                Bukkit.getPlayer (e.getEntity().getMetadata("damageer").get(0).asString()) != null){
+            ItemStack itemStack = pluginInstance.itemManager.getHandler(SoulShard.class).getItem(e.getEntity());
+            e.getDrops().add(itemStack);
+
+        }
 
     }
     private List<String> checkIfAllHostilesGotKilled(List<String> killed){
@@ -721,17 +740,17 @@ public class Events implements Listener{
         else if(projectile instanceof  SpectralArrow) itemStack = new ItemStack(Material.SPECTRAL_ARROW);
         return itemStack;
     }
-    private void applyEffects(LivingEntity player, Object o_effects){
+    private void applyEffects(LivingEntity player, Object o_effects, boolean ambient){
         List<String> effects = (List<String>) o_effects;
         effects.forEach(s -> {
-            int potency = 0;
+            int potency = ambient? 1 : 0;
             PotionEffectType potionEffectType = TraitsManager.stringToEffect.get(s);
             if(player.hasPotionEffect(potionEffectType)){
                 potency += player.getPotionEffect(potionEffectType).getAmplifier();
             }
             int duration = s.toLowerCase() != "night_vision" ? 400 : 119;
             player.addPotionEffect(new PotionEffect(potionEffectType, duration,
-                    potency, false, false,true ));
+                    potency, ambient, false,true ));
         });
     }
     private void applyEffects(LivingEntity player, Object o_effects, int duration){

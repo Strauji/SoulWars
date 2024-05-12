@@ -5,10 +5,7 @@ import com.fren_gor.ultimateAdvancementAPI.UltimateAdvancementAPI;
 import com.fren_gor.ultimateAdvancementAPI.advancement.Advancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.BaseAdvancement;
 import com.fren_gor.ultimateAdvancementAPI.advancement.RootAdvancement;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
@@ -89,10 +86,7 @@ public class SoulWars extends JavaPlugin implements Listener {
         api = UltimateAdvancementAPI.getInstance(this);
         getLogger().info("Jovem, você tem que conquistar sua alma");
       //  getServer().getPluginManager().registerEvents(new Events(), this);
-        getPlayerSoulsFile();
-        getPlayerProgressionFile();
-        readConfig();
-        readLocalization();
+        reload();
         challengerManager.initializeAdvancements(this);
         Bukkit.getPluginManager().registerEvents(this, this);
         events = new Events();
@@ -129,6 +123,12 @@ public class SoulWars extends JavaPlugin implements Listener {
             }
         };
         bukkitRunnable.runTaskTimer(this, 6000L, 6000L);
+    }
+    public void reload(){
+        getPlayerSoulsFile();
+        getPlayerProgressionFile();
+        readConfig();
+        readLocalization();
     }
     private void readLocalization(){
         localizationFile = new File(getDataFolder(), langFile);
@@ -232,10 +232,10 @@ public class SoulWars extends JavaPlugin implements Listener {
         }
         //  advancement.revoke(player);
     }
-    public void grantAdvancement(int adIndex, Player player){
+    public boolean grantAdvancement(int adIndex, Player player){
         if(!challengerManager.advancementMap.containsKey(adIndex)){
             Bukkit.getLogger().log(Level.WARNING, "Advancement " + adIndex + " not found");
-            return;
+            return true;
         }
         Advancement advancement = challengerManager.advancementMap.get(adIndex);
         String adPath = "given"+ adIndex;
@@ -245,8 +245,10 @@ public class SoulWars extends JavaPlugin implements Listener {
             advancement.grant(player);
             getConfig().set(adPath, playerPath);
             saveConfig();
+            events.updateScoreBoard(player);
+            return true;
         }
-        events.updateScoreBoard(player);
+       return false;
 
     }
     public void revokeAvancement(int adIndex, Player player){
@@ -263,6 +265,7 @@ public class SoulWars extends JavaPlugin implements Listener {
             saveConfig();
         }
         events.updateScoreBoard(player);
+        Bukkit.broadcastMessage(player.getName() + " perdeu o traço "+ ChatColor.DARK_PURPLE+"["+ advancement.getDisplay().getTitle()+"]");
 
     }
     public void onDisable() {

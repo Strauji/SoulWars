@@ -5,6 +5,7 @@ import com.samjakob.spigui.buttons.SGButton;
 import com.samjakob.spigui.item.ItemBuilder;
 import com.samjakob.spigui.menu.SGMenu;
 import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
@@ -37,6 +38,12 @@ public class ReviveBeacon extends AbstractItem{
     }
     @Override
     protected ItemStack generateItem(ItemStack itemStack, Player player) {
+        ItemMeta itemMeta =  itemStack.getItemMeta();
+        itemMeta.setDisplayName("Beacon da Salvação");
+        itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        itemStack.setItemMeta(itemMeta);
+        itemStack.addUnsafeEnchantment(Enchantment.MENDING, 1);
+
         return itemStack;
     }
     @EventHandler
@@ -62,7 +69,7 @@ public class ReviveBeacon extends AbstractItem{
                 if(!effects.isEmpty()){
                     Material icon = Material.ENCHANTED_BOOK;
                     SGButton button;
-                    ItemStack itemIcon = new ItemBuilder(icon).name(ChatColor.LIGHT_PURPLE + effects.get(0)).build();
+                    ItemStack itemIcon = new ItemBuilder(icon).name(ChatColor.AQUA + effects.get(0)).build();
                     ItemMeta itemMeta = itemIcon.getItemMeta();
                     lore.add( effects.get(0) +" - " +trait);
                     itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
@@ -90,7 +97,7 @@ public class ReviveBeacon extends AbstractItem{
                 lore.add(advancement.getDisplay().getTitle() +" - " +index);
                 Material icon = Material.ENCHANTED_BOOK;
                 SGButton button;
-                ItemStack itemIcon = new ItemBuilder(icon).name(ChatColor.LIGHT_PURPLE + advancement.getDisplay().getTitle()).build();
+                ItemStack itemIcon = new ItemBuilder(icon).name(ChatColor.AQUA + advancement.getDisplay().getTitle()).build();
                 ItemMeta itemMeta = itemIcon.getItemMeta();
                 itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
                 itemMeta.setLore(lore);

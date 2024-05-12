@@ -16,17 +16,17 @@ import java.util.function.Supplier;
 
 public class TraitsManager {
     //oh- ep- id- ie= 3h- ok- dd- dn- na- nl- nn-
-    static String[] traitID = { "oh","ep","imd","ie","3h","ok","dd","dn","na","nl",
+    static String[] traitID = { "ep","imd","ie","3h","ok","dd","dn","na","nl",
     "nn"};
     static String[] goodTraitID = {"ep","dd","dn","do","na","nl", "nn","ok"};
-    static String[] badTraitID ={"oh", "3h", "ie", "od"};
+    static String[] badTraitID ={ "3h", "ie", "od"};
     static String[] otherTraitID = {"imd", "od", "cd","oc"};
     static String[] goodEffects = { "CONDUIT_POWER","DAMAGE_RESISTANCE", "DOLPHINS_GRACE","FAST_DIGGING",
             "FIRE_RESISTANCE", "HERO_OF_THE_VILLAGE", "INCREASE_DAMAGE","INVISIBILITY","JUMP",
-    "NIGHT_VISION","REGENERATION","SPEED","WATER_BREATHING","SLOW_FALLING"};
-    static String[] badEffects = {"WEAKNESS","WITHER","SLOW_DIGGING","SLOW","POISON","DARKNESS"};
+    "REGENERATION","SPEED","WATER_BREATHING","SLOW_FALLING"};
+    static String[] badEffects = {"WEAKNESS","WITHER", "HARM","SLOW_DIGGING","SLOW","POISON"};
     static String[] damageTypes= {"CONTACT","DRAGON_BREATH","DROWNING","FIRE","FIRE_TICK",
-            "FLY_INTO_WALL", "FREEZE","HOT_FLOOR","LAVA","LIGHTNING","MAGIC","POISON","SONIC_BOOM","STARVATION","SUFFOCATION",
+            "FLY_INTO_WALL", "FREEZE","HOT_FLOOR","LAVA","MAGIC","POISON","SONIC_BOOM","STARVATION","SUFFOCATION",
             "WITHER"
     };
     static  String[] fireDamage = {"LAVA", "HOT_FLOOR", "FIRE", "FIRE_TICK"};
@@ -80,9 +80,17 @@ public class TraitsManager {
                 traitEffect = badEffectsAux.get(value);
                 badEffectsAux.remove(value);
             } else if (Arrays.asList(goodTraitID).contains(trait)) {
-                int value = rand.nextInt(goodEffectsAux.size());
-                traitEffect = goodEffectsAux.get(value);
-                goodEffectsAux.remove(value);
+                boolean isNetherWatery = true;
+                boolean isWaterHot = true;
+                while (isWaterHot || isNetherWatery){
+                    int value = rand.nextInt(goodEffectsAux.size());
+                    traitEffect = goodEffectsAux.get(value);
+                    isNetherWatery = trait.equals("nn") && (traitEffect.equals("WATER_BREATHING") || traitEffect.equals("DOLPHINS_GRACE") || traitEffect.equals("CONDUIT_POWER"));
+                    isWaterHot = trait.equals("na") && traitEffect.equals("FIRE_RESISTANCE");
+
+                    goodEffectsAux.remove(value);
+                }
+
             }else if(Arrays.asList(otherTraitID).contains(trait)){
                 switch (trait) {
                     //  case "ae": //Aura of effect
